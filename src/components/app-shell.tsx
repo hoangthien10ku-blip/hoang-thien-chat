@@ -1,10 +1,11 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { MessageSquare, Users, Settings, LogOut } from "lucide-react";
+import { MessageSquare, Users, Settings, LogOut, Shield } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useEffect, useState, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { UserAvatar } from "@/components/user-avatar";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { useIsAdmin } from "@/hooks/use-is-admin";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
@@ -14,6 +15,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const { user, signOut } = useAuth();
   const [profile, setProfile] = useState<Profile | null>(null);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const { isAdmin } = useIsAdmin();
 
   useEffect(() => {
     if (!user) return;
@@ -28,6 +30,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const items = [
     { to: "/chat", icon: MessageSquare, label: "Tin nhắn" },
     { to: "/friends", icon: Users, label: "Bạn bè" },
+    ...(isAdmin ? [{ to: "/admin", icon: Shield, label: "Quản trị" } as const] : []),
     { to: "/settings", icon: Settings, label: "Cài đặt" },
   ] as const;
 
