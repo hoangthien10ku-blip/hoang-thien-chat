@@ -170,6 +170,7 @@ export type Database = {
           created_at: string
           display_name: string
           id: string
+          is_blocked: boolean
           last_seen_at: string
           updated_at: string
           username: string | null
@@ -180,6 +181,7 @@ export type Database = {
           created_at?: string
           display_name?: string
           id: string
+          is_blocked?: boolean
           last_seen_at?: string
           updated_at?: string
           username?: string | null
@@ -190,9 +192,75 @@ export type Database = {
           created_at?: string
           display_name?: string
           id?: string
+          is_blocked?: boolean
           last_seen_at?: string
           updated_at?: string
           username?: string | null
+        }
+        Relationships: []
+      }
+      reports: {
+        Row: {
+          admin_note: string | null
+          created_at: string
+          id: string
+          message_id: string | null
+          reason: string
+          reporter_id: string
+          status: string
+          target_user_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          admin_note?: string | null
+          created_at?: string
+          id?: string
+          message_id?: string | null
+          reason: string
+          reporter_id: string
+          status?: string
+          target_user_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          admin_note?: string | null
+          created_at?: string
+          id?: string
+          message_id?: string | null
+          reason?: string
+          reporter_id?: string
+          status?: string
+          target_user_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reports_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
         }
         Relationships: []
       }
@@ -201,12 +269,20 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
       is_conversation_member: {
         Args: { _conv: string; _user: string }
         Returns: boolean
       }
     }
     Enums: {
+      app_role: "admin" | "moderator" | "user"
       friendship_status: "pending" | "accepted"
       message_kind: "text" | "image" | "video" | "file" | "system"
     }
@@ -336,6 +412,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      app_role: ["admin", "moderator", "user"],
       friendship_status: ["pending", "accepted"],
       message_kind: ["text", "image", "video", "file", "system"],
     },
