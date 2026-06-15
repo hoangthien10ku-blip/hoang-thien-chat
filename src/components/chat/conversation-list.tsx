@@ -53,10 +53,20 @@ export function ConversationList({ selectedId, onSelect }: Props) {
     // Fetch other participants
     const { data: allParts } = await supabase
       .from("conversation_participants")
-      .select("conversation_id, user_id, profiles(id, display_name, avatar_url, last_seen_at)")
+      .select("conversation_id, user_id")
       .in("conversation_id", ids);
+    const peerIds = Array.from(
+      new Set((allParts ?? []).filter((p) => p.user_id !== user.id).map((p) => p.user_id))
+    );
+    const { data: peerProfiles } = peerIds.length
+      ? await supabase
+          .from("profiles")
+          .select("id, display_name, avatar_url, last_seen_at")
+          .in("id", peerIds)
+      : { data: [] as any[] };
+    const profileById = new Map<string, any>((peerProfiles ?? []).map((p: any) => [p.id, p]));
 
-    // Fetch last messages (one query, then pick last per conv)
+    // Fetch last messages
     const { data: msgs } = await supabase
       .from("messages")
       .select("id, conversation_id, content, kind, sender_id, recalled, created_at")
@@ -79,13 +89,14 @@ export function ConversationList({ selectedId, onSelect }: Props) {
     });
 
     const result: ConversationItem[] = convs.map((c: any) => {
-      const peers = (allParts ?? []).filter((p: any) => p.conversation_id === c.id && p.user_id !== user.id);
-      const peer = !c.is_group && peers[0]?.profiles
+      const peerPart = (allParts ?? []).find((p) => p.conversation_id === c.id && p.user_id !== user.id);
+      const peerProf = peerPart ? profileById.get(peerPart.user_id) : null;
+      const peer = !c.is_group && peerProf
         ? {
-            id: peers[0].profiles.id,
-            display_name: peers[0].profiles.display_name,
-            avatar_url: peers[0].profiles.avatar_url,
-            last_seen_at: peers[0].profiles.last_seen_at,
+            id: peerProf.id,
+            display_name: peerProf.display_name,
+            avatar_url: peerProf.avatar_url,
+            last_seen_at: peerProf.last_seen_at,
           }
         : undefined;
       return {
