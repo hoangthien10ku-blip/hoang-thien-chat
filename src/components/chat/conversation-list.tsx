@@ -200,7 +200,10 @@ export function ConversationList({ selectedId, onSelect }: Props) {
                     <UserAvatar name={name} src={avatar} lastSeenAt={c.peer?.last_seen_at} showStatus={!c.is_group} size="lg" />
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center justify-between gap-2">
-                        <span className={cn("truncate font-semibold", c.unread > 0 && "text-foreground")}>{name}</span>
+                        <span className={cn("truncate font-semibold flex items-center gap-1 min-w-0", c.unread > 0 && "text-foreground")}>
+                          <span className="truncate">{name}</span>
+                          {c.peer?.is_verified && <VerifiedBadge isBot={c.peer?.is_bot} />}
+                        </span>
                         <span className="shrink-0 text-[11px] text-muted-foreground">{relativeTime(c.last_message_at)}</span>
                       </div>
                       <div className="flex items-center justify-between gap-2">
