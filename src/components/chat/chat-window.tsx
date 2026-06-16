@@ -66,7 +66,7 @@ export function ChatWindow({ conversationId, onBack }: { conversationId: string;
         .eq("conversation_id", conversationId);
       const ids = (parts ?? []).map((p) => p.user_id);
       const { data: profs } = ids.length
-        ? await supabase.from("profiles").select("id, display_name, avatar_url, last_seen_at").in("id", ids)
+        ? await supabase.from("profiles").select("id, display_name, avatar_url, last_seen_at, is_verified, is_bot").in("id", ids)
         : { data: [] as any[] };
       const map = new Map((profs ?? []).map((p: any) => [p.id, p]));
       setPeers(new Map((profs ?? []).map((p: any) => [p.id, { display_name: p.display_name, avatar_url: p.avatar_url }])));
@@ -81,6 +81,8 @@ export function ChatWindow({ conversationId, onBack }: { conversationId: string;
           avatar: other?.avatar_url ?? null,
           lastSeenAt: other?.last_seen_at,
           isGroup: false,
+          isVerified: other?.is_verified ?? false,
+          isBot: other?.is_bot ?? false,
         });
       }
       const otherPart = (parts ?? []).find((p) => p.user_id !== user.id);
