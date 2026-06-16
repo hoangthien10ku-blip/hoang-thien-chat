@@ -98,6 +98,8 @@ export function ConversationList({ selectedId, onSelect }: Props) {
             display_name: peerProf.display_name,
             avatar_url: peerProf.avatar_url,
             last_seen_at: peerProf.last_seen_at,
+            is_verified: peerProf.is_verified,
+            is_bot: peerProf.is_bot,
           }
         : undefined;
       return {
