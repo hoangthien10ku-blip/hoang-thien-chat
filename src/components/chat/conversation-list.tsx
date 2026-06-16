@@ -8,6 +8,7 @@ import { Search, PenSquare } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { NewChatDialog } from "./new-chat-dialog";
+import { VerifiedBadge } from "@/components/verified-badge";
 
 export type ConversationItem = {
   id: string;
@@ -15,7 +16,7 @@ export type ConversationItem = {
   title: string | null;
   avatar_url: string | null;
   last_message_at: string;
-  peer?: { id: string; display_name: string; avatar_url: string | null; last_seen_at: string };
+  peer?: { id: string; display_name: string; avatar_url: string | null; last_seen_at: string; is_verified?: boolean; is_bot?: boolean };
   last_message?: { content: string | null; kind: string; sender_id: string; recalled: boolean } | null;
   unread: number;
 };
