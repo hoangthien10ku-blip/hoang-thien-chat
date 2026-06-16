@@ -171,6 +171,8 @@ export type Database = {
           display_name: string
           id: string
           is_blocked: boolean
+          is_bot: boolean
+          is_verified: boolean
           last_seen_at: string
           updated_at: string
           username: string | null
@@ -182,6 +184,8 @@ export type Database = {
           display_name?: string
           id: string
           is_blocked?: boolean
+          is_bot?: boolean
+          is_verified?: boolean
           last_seen_at?: string
           updated_at?: string
           username?: string | null
@@ -193,6 +197,8 @@ export type Database = {
           display_name?: string
           id?: string
           is_blocked?: boolean
+          is_bot?: boolean
+          is_verified?: boolean
           last_seen_at?: string
           updated_at?: string
           username?: string | null
