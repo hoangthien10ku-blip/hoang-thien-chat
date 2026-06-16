@@ -48,6 +48,8 @@ export function ChatWindow({ conversationId, onBack }: { conversationId: string;
   const [otherReadAt, setOtherReadAt] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
+  const callReplyAsBot = useServerFn(replyAsBot);
+  const isBotConv = header?.isBot === true;
 
   // Load header + peers
   useEffect(() => {
