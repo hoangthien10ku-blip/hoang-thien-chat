@@ -246,9 +246,14 @@ export function ChatWindow({ conversationId, onBack }: { conversationId: string;
         )}
         <UserAvatar name={header.name} src={header.avatar} lastSeenAt={header.lastSeenAt} showStatus={!header.isGroup} />
         <div className="min-w-0 flex-1">
-          <div className="truncate font-semibold">{header.name}</div>
+          <div className="truncate font-semibold flex items-center gap-1">
+            <span className="truncate">{header.name}</span>
+            {header.isVerified && <VerifiedBadge isBot={header.isBot} />}
+          </div>
           <div className="truncate text-xs text-muted-foreground">
-            {header.isGroup
+            {header.isBot
+              ? "Trợ lý AI · luôn sẵn sàng"
+              : header.isGroup
               ? "Nhóm chat"
               : online
               ? "Đang hoạt động"
