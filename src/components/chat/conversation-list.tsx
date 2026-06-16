@@ -8,6 +8,7 @@ import { Search, PenSquare } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { NewChatDialog } from "./new-chat-dialog";
+import { VerifiedBadge } from "@/components/verified-badge";
 
 export type ConversationItem = {
   id: string;
@@ -15,7 +16,7 @@ export type ConversationItem = {
   title: string | null;
   avatar_url: string | null;
   last_message_at: string;
-  peer?: { id: string; display_name: string; avatar_url: string | null; last_seen_at: string };
+  peer?: { id: string; display_name: string; avatar_url: string | null; last_seen_at: string; is_verified?: boolean; is_bot?: boolean };
   last_message?: { content: string | null; kind: string; sender_id: string; recalled: boolean } | null;
   unread: number;
 };
@@ -61,7 +62,7 @@ export function ConversationList({ selectedId, onSelect }: Props) {
     const { data: peerProfiles } = peerIds.length
       ? await supabase
           .from("profiles")
-          .select("id, display_name, avatar_url, last_seen_at")
+          .select("id, display_name, avatar_url, last_seen_at, is_verified, is_bot")
           .in("id", peerIds)
       : { data: [] as any[] };
     const profileById = new Map<string, any>((peerProfiles ?? []).map((p: any) => [p.id, p]));
@@ -97,6 +98,8 @@ export function ConversationList({ selectedId, onSelect }: Props) {
             display_name: peerProf.display_name,
             avatar_url: peerProf.avatar_url,
             last_seen_at: peerProf.last_seen_at,
+            is_verified: peerProf.is_verified,
+            is_bot: peerProf.is_bot,
           }
         : undefined;
       return {
@@ -197,7 +200,10 @@ export function ConversationList({ selectedId, onSelect }: Props) {
                     <UserAvatar name={name} src={avatar} lastSeenAt={c.peer?.last_seen_at} showStatus={!c.is_group} size="lg" />
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center justify-between gap-2">
-                        <span className={cn("truncate font-semibold", c.unread > 0 && "text-foreground")}>{name}</span>
+                        <span className={cn("truncate font-semibold flex items-center gap-1 min-w-0", c.unread > 0 && "text-foreground")}>
+                          <span className="truncate">{name}</span>
+                          {c.peer?.is_verified && <VerifiedBadge isBot={c.peer?.is_bot} />}
+                        </span>
                         <span className="shrink-0 text-[11px] text-muted-foreground">{relativeTime(c.last_message_at)}</span>
                       </div>
                       <div className="flex items-center justify-between gap-2">

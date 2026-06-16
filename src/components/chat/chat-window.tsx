@@ -11,6 +11,9 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
+import { VerifiedBadge } from "@/components/verified-badge";
+import { useServerFn } from "@tanstack/react-start";
+import { replyAsBot, BOT_ID } from "@/lib/ai-bot.functions";
 
 type Msg = {
   id: string;
@@ -31,6 +34,8 @@ type Header = {
   avatar: string | null;
   lastSeenAt?: string;
   isGroup: boolean;
+  isVerified?: boolean;
+  isBot?: boolean;
 };
 
 export function ChatWindow({ conversationId, onBack }: { conversationId: string; onBack?: () => void }) {
@@ -43,6 +48,8 @@ export function ChatWindow({ conversationId, onBack }: { conversationId: string;
   const [otherReadAt, setOtherReadAt] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
+  const callReplyAsBot = useServerFn(replyAsBot);
+  const isBotConv = header?.isBot === true;
 
   // Load header + peers
   useEffect(() => {
@@ -59,7 +66,7 @@ export function ChatWindow({ conversationId, onBack }: { conversationId: string;
         .eq("conversation_id", conversationId);
       const ids = (parts ?? []).map((p) => p.user_id);
       const { data: profs } = ids.length
-        ? await supabase.from("profiles").select("id, display_name, avatar_url, last_seen_at").in("id", ids)
+        ? await supabase.from("profiles").select("id, display_name, avatar_url, last_seen_at, is_verified, is_bot").in("id", ids)
         : { data: [] as any[] };
       const map = new Map((profs ?? []).map((p: any) => [p.id, p]));
       setPeers(new Map((profs ?? []).map((p: any) => [p.id, { display_name: p.display_name, avatar_url: p.avatar_url }])));
@@ -74,6 +81,8 @@ export function ChatWindow({ conversationId, onBack }: { conversationId: string;
           avatar: other?.avatar_url ?? null,
           lastSeenAt: other?.last_seen_at,
           isGroup: false,
+          isVerified: other?.is_verified ?? false,
+          isBot: other?.is_bot ?? false,
         });
       }
       const otherPart = (parts ?? []).find((p) => p.user_id !== user.id);
@@ -186,7 +195,17 @@ export function ChatWindow({ conversationId, onBack }: { conversationId: string;
       content,
       kind: "text",
     });
-    if (error) toast.error("Gửi không thành công");
+    if (error) {
+      toast.error("Gửi không thành công");
+      return;
+    }
+    if (isBotConv) {
+      try {
+        await callReplyAsBot({ data: { conversationId } });
+      } catch (e) {
+        toast.error(e instanceof Error ? e.message : "Bot không trả lời được");
+      }
+    }
   }
 
   async function recall(id: string) {
@@ -227,9 +246,14 @@ export function ChatWindow({ conversationId, onBack }: { conversationId: string;
         )}
         <UserAvatar name={header.name} src={header.avatar} lastSeenAt={header.lastSeenAt} showStatus={!header.isGroup} />
         <div className="min-w-0 flex-1">
-          <div className="truncate font-semibold">{header.name}</div>
+          <div className="truncate font-semibold flex items-center gap-1">
+            <span className="truncate">{header.name}</span>
+            {header.isVerified && <VerifiedBadge isBot={header.isBot} />}
+          </div>
           <div className="truncate text-xs text-muted-foreground">
-            {header.isGroup
+            {header.isBot
+              ? "Trợ lý AI · luôn sẵn sàng"
+              : header.isGroup
               ? "Nhóm chat"
               : online
               ? "Đang hoạt động"

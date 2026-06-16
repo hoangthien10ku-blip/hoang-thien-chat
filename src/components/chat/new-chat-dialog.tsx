@@ -4,7 +4,8 @@ import { useAuth } from "@/hooks/use-auth";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { UserAvatar } from "@/components/user-avatar";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
+import { Loader2, Sparkles } from "lucide-react";
+import { BOT_ID } from "@/lib/ai-bot.functions";
 
 type Friend = { id: string; display_name: string; avatar_url: string | null; last_seen_at: string };
 
@@ -91,6 +92,22 @@ export function NewChatDialog({ children, onCreated }: { children: ReactNode; on
         <DialogHeader>
           <DialogTitle>Tin nhắn mới</DialogTitle>
         </DialogHeader>
+        <div className="space-y-1">
+          <button
+            onClick={() => startChat(BOT_ID)}
+            disabled={busyId === BOT_ID}
+            className="flex w-full items-center gap-3 rounded-xl p-2 text-left hover:bg-accent disabled:opacity-50"
+          >
+            <div className="size-10 shrink-0 rounded-full bg-gradient-to-br from-fuchsia-500 to-violet-500 flex items-center justify-center text-white">
+              <Sparkles className="size-5" />
+            </div>
+            <div className="flex-1">
+              <div className="font-medium">Hoàng Thiên AI</div>
+              <div className="text-xs text-muted-foreground">Trò chuyện với trợ lý AI</div>
+            </div>
+            {busyId === BOT_ID && <Loader2 className="size-4 animate-spin" />}
+          </button>
+        </div>
         {loading ? (
           <div className="flex justify-center py-10"><Loader2 className="size-5 animate-spin text-muted-foreground" /></div>
         ) : friends.length === 0 ? (
@@ -98,7 +115,7 @@ export function NewChatDialog({ children, onCreated }: { children: ReactNode; on
             Chưa có bạn bè. Hãy thêm bạn ở tab "Bạn bè".
           </p>
         ) : (
-          <ul className="max-h-[60vh] space-y-1 overflow-y-auto">
+          <ul className="max-h-[60vh] space-y-1 overflow-y-auto border-t pt-2">
             {friends.map((f) => (
               <li key={f.id}>
                 <button
