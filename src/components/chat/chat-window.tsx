@@ -195,7 +195,17 @@ export function ChatWindow({ conversationId, onBack }: { conversationId: string;
       content,
       kind: "text",
     });
-    if (error) toast.error("Gửi không thành công");
+    if (error) {
+      toast.error("Gửi không thành công");
+      return;
+    }
+    if (isBotConv) {
+      try {
+        await callReplyAsBot({ data: { conversationId } });
+      } catch (e) {
+        toast.error(e instanceof Error ? e.message : "Bot không trả lời được");
+      }
+    }
   }
 
   async function recall(id: string) {
