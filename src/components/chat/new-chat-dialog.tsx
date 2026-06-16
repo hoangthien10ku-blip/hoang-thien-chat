@@ -4,7 +4,8 @@ import { useAuth } from "@/hooks/use-auth";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { UserAvatar } from "@/components/user-avatar";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
+import { Loader2, Sparkles } from "lucide-react";
+import { BOT_ID } from "@/lib/ai-bot.functions";
 
 type Friend = { id: string; display_name: string; avatar_url: string | null; last_seen_at: string };
 
