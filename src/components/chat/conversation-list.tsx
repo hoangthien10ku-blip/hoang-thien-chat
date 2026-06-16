@@ -62,7 +62,7 @@ export function ConversationList({ selectedId, onSelect }: Props) {
     const { data: peerProfiles } = peerIds.length
       ? await supabase
           .from("profiles")
-          .select("id, display_name, avatar_url, last_seen_at")
+          .select("id, display_name, avatar_url, last_seen_at, is_verified, is_bot")
           .in("id", peerIds)
       : { data: [] as any[] };
     const profileById = new Map<string, any>((peerProfiles ?? []).map((p: any) => [p.id, p]));
