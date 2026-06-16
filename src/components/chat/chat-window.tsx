@@ -11,6 +11,9 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
+import { VerifiedBadge } from "@/components/verified-badge";
+import { useServerFn } from "@tanstack/react-start";
+import { replyAsBot, BOT_ID } from "@/lib/ai-bot.functions";
 
 type Msg = {
   id: string;
@@ -31,6 +34,8 @@ type Header = {
   avatar: string | null;
   lastSeenAt?: string;
   isGroup: boolean;
+  isVerified?: boolean;
+  isBot?: boolean;
 };
 
 export function ChatWindow({ conversationId, onBack }: { conversationId: string; onBack?: () => void }) {
