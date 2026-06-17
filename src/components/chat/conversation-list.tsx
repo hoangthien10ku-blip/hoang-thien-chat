@@ -13,6 +13,7 @@ import { VerifiedBadge } from "@/components/verified-badge";
 export type ConversationItem = {
   id: string;
   is_group: boolean;
+  is_pinned: boolean;
   title: string | null;
   avatar_url: string | null;
   last_message_at: string;
