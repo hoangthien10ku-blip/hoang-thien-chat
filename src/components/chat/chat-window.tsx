@@ -189,16 +189,47 @@ export function ChatWindow({ conversationId, onBack }: { conversationId: string;
     setInput("");
     const ch = channelRef.current;
     if (ch) ch.track({ user_id: user.id, typing: false, online_at: new Date().toISOString() });
-    const { error } = await supabase.from("messages").insert({
+
+    // Optimistic insert
+    const tempId = `temp-${crypto.randomUUID()}`;
+    const optimistic: Msg = {
+      id: tempId,
       conversation_id: conversationId,
       sender_id: user.id,
       content,
       kind: "text",
-    });
+      attachment_url: null,
+      attachment_name: null,
+      recalled: false,
+      deleted_for: [],
+      reply_to: null,
+      created_at: new Date().toISOString(),
+    };
+    setMessages((prev) => [...prev, optimistic]);
+
+    const { data: inserted, error } = await supabase
+      .from("messages")
+      .insert({
+        conversation_id: conversationId,
+        sender_id: user.id,
+        content,
+        kind: "text",
+      })
+      .select("*")
+      .single();
+
     if (error) {
+      setMessages((prev) => prev.filter((m) => m.id !== tempId));
       toast.error("Gửi không thành công");
       return;
     }
+    // Replace temp with real message (dedupe if realtime already added it)
+    setMessages((prev) => {
+      const withoutTemp = prev.filter((m) => m.id !== tempId);
+      if (withoutTemp.some((m) => m.id === inserted.id)) return withoutTemp;
+      return [...withoutTemp, inserted as Msg];
+    });
+
     if (isBotConv) {
       try {
         await callReplyAsBot({ data: { conversationId } });
