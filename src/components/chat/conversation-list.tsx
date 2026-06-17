@@ -109,6 +109,7 @@ export function ConversationList({ selectedId, onSelect }: Props) {
       return {
         id: c.id,
         is_group: c.is_group,
+        is_pinned: !!c.is_pinned,
         title: c.title,
         avatar_url: c.avatar_url,
         last_message_at: c.last_message_at,
