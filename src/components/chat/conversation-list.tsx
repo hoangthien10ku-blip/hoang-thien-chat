@@ -4,7 +4,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { UserAvatar } from "@/components/user-avatar";
 import { relativeTime } from "@/lib/format";
 import { cn } from "@/lib/utils";
-import { Search, PenSquare } from "lucide-react";
+import { Search, PenSquare, Pin } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { NewChatDialog } from "./new-chat-dialog";
@@ -13,6 +13,7 @@ import { VerifiedBadge } from "@/components/verified-badge";
 export type ConversationItem = {
   id: string;
   is_group: boolean;
+  is_pinned: boolean;
   title: string | null;
   avatar_url: string | null;
   last_message_at: string;
@@ -36,13 +37,16 @@ export function ConversationList({ selectedId, onSelect }: Props) {
     if (!user) return;
     const { data: parts } = await supabase
       .from("conversation_participants")
-      .select("conversation_id, last_read_at, conversations(id, is_group, title, avatar_url, last_message_at)")
+      .select("conversation_id, last_read_at, conversations(id, is_group, is_pinned, title, avatar_url, last_message_at)")
       .eq("user_id", user.id);
 
     const convs = (parts ?? [])
       .map((p: any) => ({ ...p.conversations, _last_read_at: p.last_read_at }))
       .filter(Boolean)
-      .sort((a: any, b: any) => +new Date(b.last_message_at) - +new Date(a.last_message_at));
+      .sort((a: any, b: any) => {
+        if ((a.is_pinned ? 1 : 0) !== (b.is_pinned ? 1 : 0)) return a.is_pinned ? -1 : 1;
+        return +new Date(b.last_message_at) - +new Date(a.last_message_at);
+      });
 
     const ids = convs.map((c: any) => c.id);
     if (ids.length === 0) {
@@ -105,6 +109,7 @@ export function ConversationList({ selectedId, onSelect }: Props) {
       return {
         id: c.id,
         is_group: c.is_group,
+        is_pinned: !!c.is_pinned,
         title: c.title,
         avatar_url: c.avatar_url,
         last_message_at: c.last_message_at,
@@ -203,6 +208,7 @@ export function ConversationList({ selectedId, onSelect }: Props) {
                         <span className={cn("truncate font-semibold flex items-center gap-1 min-w-0", c.unread > 0 && "text-foreground")}>
                           <span className="truncate">{name}</span>
                           {c.peer?.is_verified && <VerifiedBadge isBot={c.peer?.is_bot} />}
+                          {c.is_pinned && <Pin className="size-3 shrink-0 text-muted-foreground" />}
                         </span>
                         <span className="shrink-0 text-[11px] text-muted-foreground">{relativeTime(c.last_message_at)}</span>
                       </div>

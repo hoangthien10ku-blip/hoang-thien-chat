@@ -14,6 +14,56 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_conversation_memory: {
+        Row: {
+          conversation_id: string
+          last_summarized_msg_count: number
+          summary: string
+          updated_at: string
+        }
+        Insert: {
+          conversation_id: string
+          last_summarized_msg_count?: number
+          summary?: string
+          updated_at?: string
+        }
+        Update: {
+          conversation_id?: string
+          last_summarized_msg_count?: number
+          summary?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_conversation_memory_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: true
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_user_memory: {
+        Row: {
+          created_at: string
+          fact: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          fact: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          fact?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       conversation_participants: {
         Row: {
           conversation_id: string
@@ -53,6 +103,7 @@ export type Database = {
           created_by: string | null
           id: string
           is_group: boolean
+          is_pinned: boolean
           last_message_at: string
           title: string | null
         }
@@ -62,6 +113,7 @@ export type Database = {
           created_by?: string | null
           id?: string
           is_group?: boolean
+          is_pinned?: boolean
           last_message_at?: string
           title?: string | null
         }
@@ -71,6 +123,7 @@ export type Database = {
           created_by?: string | null
           id?: string
           is_group?: boolean
+          is_pinned?: boolean
           last_message_at?: string
           title?: string | null
         }
@@ -174,6 +227,7 @@ export type Database = {
           is_bot: boolean
           is_verified: boolean
           last_seen_at: string
+          phone: string | null
           updated_at: string
           username: string | null
         }
@@ -187,6 +241,7 @@ export type Database = {
           is_bot?: boolean
           is_verified?: boolean
           last_seen_at?: string
+          phone?: string | null
           updated_at?: string
           username?: string | null
         }
@@ -200,6 +255,7 @@ export type Database = {
           is_bot?: boolean
           is_verified?: boolean
           last_seen_at?: string
+          phone?: string | null
           updated_at?: string
           username?: string | null
         }
@@ -275,6 +331,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      ensure_ai_conversation: { Args: { _user_id: string }; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
