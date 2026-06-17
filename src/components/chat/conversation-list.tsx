@@ -4,7 +4,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { UserAvatar } from "@/components/user-avatar";
 import { relativeTime } from "@/lib/format";
 import { cn } from "@/lib/utils";
-import { Search, PenSquare } from "lucide-react";
+import { Search, PenSquare, Pin } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { NewChatDialog } from "./new-chat-dialog";
