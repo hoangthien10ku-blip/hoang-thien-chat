@@ -37,13 +37,16 @@ export function ConversationList({ selectedId, onSelect }: Props) {
     if (!user) return;
     const { data: parts } = await supabase
       .from("conversation_participants")
-      .select("conversation_id, last_read_at, conversations(id, is_group, title, avatar_url, last_message_at)")
+      .select("conversation_id, last_read_at, conversations(id, is_group, is_pinned, title, avatar_url, last_message_at)")
       .eq("user_id", user.id);
 
     const convs = (parts ?? [])
       .map((p: any) => ({ ...p.conversations, _last_read_at: p.last_read_at }))
       .filter(Boolean)
-      .sort((a: any, b: any) => +new Date(b.last_message_at) - +new Date(a.last_message_at));
+      .sort((a: any, b: any) => {
+        if ((a.is_pinned ? 1 : 0) !== (b.is_pinned ? 1 : 0)) return a.is_pinned ? -1 : 1;
+        return +new Date(b.last_message_at) - +new Date(a.last_message_at);
+      });
 
     const ids = convs.map((c: any) => c.id);
     if (ids.length === 0) {
