@@ -208,6 +208,7 @@ export function ConversationList({ selectedId, onSelect }: Props) {
                         <span className={cn("truncate font-semibold flex items-center gap-1 min-w-0", c.unread > 0 && "text-foreground")}>
                           <span className="truncate">{name}</span>
                           {c.peer?.is_verified && <VerifiedBadge isBot={c.peer?.is_bot} />}
+                          {c.is_pinned && <Pin className="size-3 shrink-0 text-muted-foreground" />}
                         </span>
                         <span className="shrink-0 text-[11px] text-muted-foreground">{relativeTime(c.last_message_at)}</span>
                       </div>
