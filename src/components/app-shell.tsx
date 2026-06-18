@@ -113,3 +113,32 @@ export function AppShell({ children }: { children: ReactNode }) {
     </div>
   );
 }
+
+function KinbookMobileHeader() {
+  const [show, setShow] = useState(false);
+  useEffect(() => {
+    setShow(isAndroid());
+  }, []);
+  return (
+    <header className="md:hidden fixed top-0 inset-x-0 z-30 flex items-center justify-between border-b bg-card/95 backdrop-blur px-3 py-2 pt-[calc(env(safe-area-inset-top)+0.5rem)]">
+      <Link to="/chat" className="flex items-center gap-2" aria-label="KinBook">
+        <img src={kinbookLogo} alt="" width={28} height={28} className="size-7 rounded-lg" />
+        <span className="text-sm font-bold tracking-tight">KinBook</span>
+      </Link>
+      {show && (
+        <a
+          href={APK_URL}
+          download
+          className={cn(
+            "inline-flex items-center gap-1.5 rounded-full bg-black px-3 py-1.5 text-xs font-black",
+            "text-[#39FF14] [text-shadow:_0_0_6px_#39FF14,_0_0_12px_#39FF14]",
+            "ring-1 ring-[#39FF14]/50",
+          )}
+        >
+          <Download className="size-3.5" />
+          Tải App KinBook
+        </a>
+      )}
+    </header>
+  );
+}
