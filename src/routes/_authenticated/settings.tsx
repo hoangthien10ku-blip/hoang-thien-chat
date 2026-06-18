@@ -15,7 +15,7 @@ import { LogOut, Loader2 } from "lucide-react";
 export const Route = createFileRoute("/_authenticated/settings")({
   head: () => ({
     meta: [
-      { title: "Cài đặt — Hoàng Thiên Chat" },
+      { title: "Cài đặt — KinBook" },
       { name: "description", content: "Quản lý hồ sơ và tài khoản của bạn." },
     ],
   }),
