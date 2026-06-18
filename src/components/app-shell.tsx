@@ -85,6 +85,10 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
       </aside>
 
+      {/* Mobile top bar with APK download (Android only) */}
+      <KinbookMobileHeader />
+
+
       <main className="flex-1 min-w-0 flex flex-col">{children}</main>
 
       {/* Mobile bottom nav */}
