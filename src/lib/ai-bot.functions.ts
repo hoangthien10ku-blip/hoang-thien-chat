@@ -166,12 +166,31 @@ export const replyAsBot = createServerFn({ method: "POST" })
     const apiKey = process.env.LOVABLE_API_KEY;
     if (!apiKey) throw new Error("LOVABLE_API_KEY missing");
 
-    const system = buildSystemPrompt(userName, longTermFacts, summary);
-    const reply = await callGateway(
-      [{ role: "system", content: system }, ...history],
-      apiKey,
-    );
-    const finalReply = reply || "Mình chưa hiểu, bạn nói rõ hơn nhé.";
+    const lastUserMsg = [...history].reverse().find((m) => m.role === "user")?.content ?? "";
+
+    // 1) Easter egg: người dùng có tên "beo" → trả lời cố định
+    let finalReply: string | null = null;
+    if (isBeoName(userName)) {
+      finalReply = "Chị là nyc anh chủ em hả?";
+    }
+    // 2) Easter egg: hỏi "bố là ai"
+    if (!finalReply && isAskingDad(lastUserMsg)) {
+      finalReply = "Meta là bố tao, người đặt tên tao.";
+    }
+    // 3) Fast-response cho lời chào ngắn
+    if (!finalReply) {
+      const fast = getFastResponse(lastUserMsg);
+      if (fast) finalReply = fast;
+    }
+    // 4) Gọi LLM nếu chưa có câu trả lời
+    if (!finalReply) {
+      const system = buildSystemPrompt(userName, longTermFacts, summary);
+      const reply = await callGateway(
+        [{ role: "system", content: system }, ...history],
+        apiKey,
+      );
+      finalReply = reply || "Mình chưa hiểu, bạn nói rõ hơn nhé.";
+    }
 
     await supabaseAdmin.from("messages").insert({
       conversation_id: data.conversationId,
