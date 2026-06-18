@@ -16,7 +16,7 @@ type Friendship = { id: string; requester_id: string; addressee_id: string; stat
 export const Route = createFileRoute("/_authenticated/friends")({
   head: () => ({
     meta: [
-      { title: "Bạn bè — Hoàng Thiên Chat" },
+      { title: "Bạn bè — KinBook" },
       { name: "description", content: "Tìm và kết nối bạn bè." },
     ],
   }),

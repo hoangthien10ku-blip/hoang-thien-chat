@@ -16,8 +16,8 @@ import { resolveLoginIdentifier } from "@/lib/auth.functions";
 export const Route = createFileRoute("/auth")({
   head: () => ({
     meta: [
-      { title: "Đăng nhập — Hoàng Thiên Chat" },
-      { name: "description", content: "Đăng nhập hoặc tạo tài khoản Hoàng Thiên Chat." },
+      { title: "Đăng nhập — KinBook" },
+      { name: "description", content: "Đăng nhập hoặc tạo tài khoản KinBook." },
     ],
   }),
   component: AuthPage,
@@ -176,7 +176,7 @@ function AuthPage() {
           <div className="flex size-16 items-center justify-center rounded-3xl gradient-brand shadow-[var(--shadow-glow)]">
             <MessageCircleHeart className="size-8 text-primary-foreground" />
           </div>
-          <h1 className="mt-5 text-3xl font-bold tracking-tight">Hoàng Thiên Chat</h1>
+          <h1 className="mt-5 text-3xl font-bold tracking-tight">KinBook</h1>
           <p className="mt-2 text-sm text-muted-foreground">Nhắn tin tức thời. Đẹp. Riêng tư.</p>
         </div>
 
@@ -279,7 +279,7 @@ function AuthPage() {
         </div>
 
         <p className="mt-6 text-center text-xs text-muted-foreground">
-          Bằng việc tiếp tục, bạn đồng ý với Điều khoản & Chính sách của Hoàng Thiên Chat.
+          Bằng việc tiếp tục, bạn đồng ý với Điều khoản & Chính sách của KinBook.
         </p>
       </div>
     </div>

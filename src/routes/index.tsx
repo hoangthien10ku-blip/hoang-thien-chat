@@ -4,7 +4,7 @@ import { useAuth } from "@/hooks/use-auth";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Hoàng Thiên Chat — Nhắn tin hiện đại" },
+      { title: "KinBook — Nhắn tin hiện đại" },
       { name: "description", content: "Nhắn tin thời gian thực, kết bạn, chia sẻ khoảnh khắc." },
     ],
   }),

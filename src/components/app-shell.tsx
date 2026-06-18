@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { MessageSquare, Users, Settings, LogOut, Shield } from "lucide-react";
+import { MessageSquare, Users, Settings, LogOut, Shield, Download } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useEffect, useState, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -8,6 +8,15 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { useIsAdmin } from "@/hooks/use-is-admin";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import kinbookLogo from "@/assets/kinbook-logo.png";
+
+// Đặt link APK Kinbook tại đây sau khi build (ví dụ /downloads/kinbook.apk hoặc URL ngoài)
+const APK_URL = "/kinbook.apk";
+
+function isAndroid() {
+  if (typeof navigator === "undefined") return false;
+  return /android/i.test(navigator.userAgent);
+}
 
 type Profile = { id: string; display_name: string; avatar_url: string | null };
 
@@ -41,10 +50,10 @@ export function AppShell({ children }: { children: ReactNode }) {
         <div className="flex flex-col items-center gap-2">
           <Link
             to="/chat"
-            className="mb-3 flex size-11 items-center justify-center rounded-2xl gradient-brand text-primary-foreground shadow-[var(--shadow-glow)]"
-            aria-label="Hoàng Thiên"
+            className="mb-3 flex size-11 items-center justify-center rounded-2xl bg-[#0A0F1C] overflow-hidden shadow-[var(--shadow-glow)]"
+            aria-label="KinBook"
           >
-            <span className="text-lg font-bold">HT</span>
+            <img src={kinbookLogo} alt="KinBook" width={44} height={44} className="size-full object-cover" />
           </Link>
           {items.map((it) => {
             const active = pathname.startsWith(it.to);
@@ -76,7 +85,11 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
       </aside>
 
-      <main className="flex-1 min-w-0 flex flex-col">{children}</main>
+      {/* Mobile top bar with APK download (Android only) */}
+      <KinbookMobileHeader />
+
+
+      <main className="flex-1 min-w-0 flex flex-col pt-[calc(env(safe-area-inset-top)+3rem)] md:pt-0">{children}</main>
 
       {/* Mobile bottom nav */}
       <nav className="md:hidden fixed bottom-0 inset-x-0 z-30 flex items-center justify-around border-t bg-card/95 backdrop-blur pb-[env(safe-area-inset-bottom)]">
@@ -98,5 +111,34 @@ export function AppShell({ children }: { children: ReactNode }) {
         })}
       </nav>
     </div>
+  );
+}
+
+function KinbookMobileHeader() {
+  const [show, setShow] = useState(false);
+  useEffect(() => {
+    setShow(isAndroid());
+  }, []);
+  return (
+    <header className="md:hidden fixed top-0 inset-x-0 z-30 flex items-center justify-between border-b bg-card/95 backdrop-blur px-3 py-2 pt-[calc(env(safe-area-inset-top)+0.5rem)]">
+      <Link to="/chat" className="flex items-center gap-2" aria-label="KinBook">
+        <img src={kinbookLogo} alt="" width={28} height={28} className="size-7 rounded-lg" />
+        <span className="text-sm font-bold tracking-tight">KinBook</span>
+      </Link>
+      {show && (
+        <a
+          href={APK_URL}
+          download
+          className={cn(
+            "inline-flex items-center gap-1.5 rounded-full bg-black px-3 py-1.5 text-xs font-black",
+            "text-[#39FF14] [text-shadow:_0_0_6px_#39FF14,_0_0_12px_#39FF14]",
+            "ring-1 ring-[#39FF14]/50",
+          )}
+        >
+          <Download className="size-3.5" />
+          Tải App KinBook
+        </a>
+      )}
+    </header>
   );
 }

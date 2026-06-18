@@ -11,7 +11,7 @@ const search = z.object({ c: z.string().optional() });
 export const Route = createFileRoute("/_authenticated/chat")({
   head: () => ({
     meta: [
-      { title: "Tin nhắn — Hoàng Thiên Chat" },
+      { title: "Tin nhắn — KinBook" },
       { name: "description", content: "Nhắn tin thời gian thực với bạn bè." },
     ],
   }),
