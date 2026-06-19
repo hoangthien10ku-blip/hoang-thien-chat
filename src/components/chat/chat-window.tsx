@@ -99,10 +99,10 @@ export function ChatWindow({ conversationId, onBack }: { conversationId: string;
         .from("messages")
         .select("*")
         .eq("conversation_id", conversationId)
-        .order("created_at", { ascending: true })
-        .limit(200);
+        .order("created_at", { ascending: true });
       if (mounted) setMessages((data ?? []) as Msg[]);
     })();
+
 
     const ch = supabase
       .channel(`conv-${conversationId}`, { config: { presence: { key: user.id } } })
