@@ -25,8 +25,9 @@ function ChatPage() {
   const select = (id: string) => navigate({ to: "/chat", search: { c: id } });
 
   return (
-    <AppShell>
-      <div className="flex h-full min-h-0 w-full overflow-hidden pb-[64px] md:pb-0">
+    <AppShell hideMobileNav={!!c}>
+      <div className={cn("flex h-full min-h-0 w-full overflow-hidden", c ? "pb-0" : "pb-[64px] md:pb-0")}>
+
         <section
           className={cn(
             "w-full md:w-[360px] md:max-w-[360px] shrink-0 border-r bg-card",
