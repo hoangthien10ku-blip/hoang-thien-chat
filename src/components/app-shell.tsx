@@ -10,8 +10,6 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import kinbookLogo from "@/assets/kinbook-logo.png";
 
-// Đặt link APK Kinbook tại đây sau khi build (ví dụ /downloads/kinbook.apk hoặc URL ngoài)
-const APK_URL = "/kinbook.apk";
 
 function isAndroid() {
   if (typeof navigator === "undefined") return false;
