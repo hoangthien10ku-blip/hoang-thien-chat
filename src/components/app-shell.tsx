@@ -20,7 +20,7 @@ function isAndroid() {
 
 type Profile = { id: string; display_name: string; avatar_url: string | null };
 
-export function AppShell({ children }: { children: ReactNode }) {
+export function AppShell({ children, hideMobileNav = false }: { children: ReactNode; hideMobileNav?: boolean }) {
   const { user, signOut } = useAuth();
   const [profile, setProfile] = useState<Profile | null>(null);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
