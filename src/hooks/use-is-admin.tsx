@@ -19,11 +19,10 @@ export function useIsAdmin() {
       .from("user_roles")
       .select("role")
       .eq("user_id", user.id)
-      .eq("role", "admin")
-      .maybeSingle()
+      .in("role", ["admin", "owner"])
       .then(({ data }) => {
         if (!mounted) return;
-        setIsAdmin(!!data);
+        setIsAdmin(!!(data && data.length > 0));
         setLoading(false);
       });
     return () => {
