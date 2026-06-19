@@ -85,31 +85,33 @@ export function AppShell({ children, hideMobileNav = false }: { children: ReactN
         </div>
       </aside>
 
-      {/* Mobile top bar with APK download (Android only) */}
-      <KinbookMobileHeader />
+      {/* Mobile top bar (hidden when chatting) */}
+      {!hideMobileNav && <KinbookMobileHeader />}
 
 
-      <main className="flex-1 min-w-0 flex flex-col pt-[calc(env(safe-area-inset-top)+3rem)] md:pt-0">{children}</main>
+      <main className={cn("flex-1 min-w-0 flex flex-col", hideMobileNav ? "pt-0" : "pt-[calc(env(safe-area-inset-top)+3rem)] md:pt-0")}>{children}</main>
 
       {/* Mobile bottom nav */}
-      <nav className="md:hidden fixed bottom-0 inset-x-0 z-30 flex items-center justify-around border-t bg-card/95 backdrop-blur pb-[env(safe-area-inset-bottom)]">
-        {items.map((it) => {
-          const active = pathname.startsWith(it.to);
-          return (
-            <Link
-              key={it.to}
-              to={it.to}
-              className={cn(
-                "flex flex-1 flex-col items-center gap-0.5 py-2.5 text-[11px] font-medium",
-                active ? "text-primary" : "text-muted-foreground"
-              )}
-            >
-              <it.icon className="size-5" />
-              {it.label}
-            </Link>
-          );
-        })}
-      </nav>
+      {!hideMobileNav && (
+        <nav className="md:hidden fixed bottom-0 inset-x-0 z-30 flex items-center justify-around border-t bg-card/95 backdrop-blur pb-[env(safe-area-inset-bottom)]">
+          {items.map((it) => {
+            const active = pathname.startsWith(it.to);
+            return (
+              <Link
+                key={it.to}
+                to={it.to}
+                className={cn(
+                  "flex flex-1 flex-col items-center gap-0.5 py-2.5 text-[11px] font-medium",
+                  active ? "text-primary" : "text-muted-foreground"
+                )}
+              >
+                <it.icon className="size-5" />
+                {it.label}
+              </Link>
+            );
+          })}
+        </nav>
+      )}
     </div>
   );
 }
