@@ -303,10 +303,11 @@ export function ChatWindow({ conversationId, onBack }: { conversationId: string;
             <DropdownMenuItem
               onClick={async () => {
                 if (!user) return;
+                const otherId = Array.from(peers.keys()).find((id) => id !== user.id) ?? null;
                 const { error } = await supabase.from("reports").insert({
                   reporter_id: user.id,
-                  conversation_id: conversationId,
-                  reason: "Báo cáo từ cửa sổ chat",
+                  target_user_id: otherId,
+                  reason: `Báo cáo cuộc trò chuyện ${conversationId}`,
                 });
                 if (error) toast.error("Không gửi được báo cáo");
                 else toast.success("Đã gửi báo cáo. Cảm ơn bạn!");
