@@ -293,9 +293,47 @@ export function ChatWindow({ conversationId, onBack }: { conversationId: string;
               : "Ngoại tuyến"}
           </div>
         </div>
-        <Button variant="ghost" size="icon" aria-label="Thêm">
-          <MoreVertical className="size-5" />
-        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon" aria-label="Thêm">
+              <MoreVertical className="size-5" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem
+              onClick={async () => {
+                if (!user) return;
+                const { error } = await supabase.from("reports").insert({
+                  reporter_id: user.id,
+                  conversation_id: conversationId,
+                  reason: "Báo cáo từ cửa sổ chat",
+                });
+                if (error) toast.error("Không gửi được báo cáo");
+                else toast.success("Đã gửi báo cáo. Cảm ơn bạn!");
+              }}
+            >
+              Báo cáo cuộc trò chuyện
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={async () => {
+                if (!user) return;
+                if (!confirm("Xoá cuộc trò chuyện này khỏi danh sách của bạn?")) return;
+                const { error } = await supabase
+                  .from("conversation_participants")
+                  .delete()
+                  .eq("conversation_id", conversationId)
+                  .eq("user_id", user.id);
+                if (error) toast.error("Không thể xoá");
+                else {
+                  toast.success("Đã xoá cuộc trò chuyện");
+                  onBack?.();
+                }
+              }}
+            >
+              Xoá cuộc trò chuyện
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       {/* Messages */}
