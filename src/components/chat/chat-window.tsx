@@ -99,10 +99,10 @@ export function ChatWindow({ conversationId, onBack }: { conversationId: string;
         .from("messages")
         .select("*")
         .eq("conversation_id", conversationId)
-        .order("created_at", { ascending: true })
-        .limit(200);
+        .order("created_at", { ascending: true });
       if (mounted) setMessages((data ?? []) as Msg[]);
     })();
+
 
     const ch = supabase
       .channel(`conv-${conversationId}`, { config: { presence: { key: user.id } } })
@@ -293,9 +293,48 @@ export function ChatWindow({ conversationId, onBack }: { conversationId: string;
               : "Ngoại tuyến"}
           </div>
         </div>
-        <Button variant="ghost" size="icon" aria-label="Thêm">
-          <MoreVertical className="size-5" />
-        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon" aria-label="Thêm">
+              <MoreVertical className="size-5" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem
+              onClick={async () => {
+                if (!user) return;
+                const otherId = Array.from(peers.keys()).find((id) => id !== user.id) ?? null;
+                const { error } = await supabase.from("reports").insert({
+                  reporter_id: user.id,
+                  target_user_id: otherId,
+                  reason: `Báo cáo cuộc trò chuyện ${conversationId}`,
+                });
+                if (error) toast.error("Không gửi được báo cáo");
+                else toast.success("Đã gửi báo cáo. Cảm ơn bạn!");
+              }}
+            >
+              Báo cáo cuộc trò chuyện
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={async () => {
+                if (!user) return;
+                if (!confirm("Xoá cuộc trò chuyện này khỏi danh sách của bạn?")) return;
+                const { error } = await supabase
+                  .from("conversation_participants")
+                  .delete()
+                  .eq("conversation_id", conversationId)
+                  .eq("user_id", user.id);
+                if (error) toast.error("Không thể xoá");
+                else {
+                  toast.success("Đã xoá cuộc trò chuyện");
+                  onBack?.();
+                }
+              }}
+            >
+              Xoá cuộc trò chuyện
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       {/* Messages */}
@@ -408,34 +447,91 @@ function Bubble({
             {timeShort(msg.created_at)}
           </span>
         )}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <button
-              className={cn(
-                "group relative max-w-full whitespace-pre-wrap break-words px-3.5 py-2 text-[15px] leading-snug shadow-[var(--shadow-bubble)] transition",
-                isMe
-                  ? "bg-[var(--color-bubble-out)] text-[var(--color-bubble-out-foreground)]"
-                  : "bg-[var(--color-bubble-in)] text-[var(--color-bubble-in-foreground)]",
-                bubbleRadius(isMe, groupedTop, groupedBottom),
-                msg.recalled && "italic opacity-60"
-              )}
-            >
-              {msg.recalled ? "Tin nhắn đã được thu hồi" : msg.content}
-            </button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align={isMe ? "end" : "start"}>
-            {isMe && !msg.recalled && (
-              <DropdownMenuItem onClick={onRecall}>
-                <Undo2 className="mr-2 size-4" /> Thu hồi với mọi người
-              </DropdownMenuItem>
-            )}
-            <DropdownMenuItem onClick={onDeleteForMe}>
-              <Trash2 className="mr-2 size-4" /> Xoá ở phía bạn
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <BubbleMenu
+          isMe={isMe}
+          msg={msg}
+          groupedTop={groupedTop}
+          groupedBottom={groupedBottom}
+          onRecall={onRecall}
+          onDeleteForMe={onDeleteForMe}
+        />
       </div>
     </div>
+  );
+}
+
+function BubbleMenu({
+  msg, isMe, groupedTop, groupedBottom, onRecall, onDeleteForMe,
+}: {
+  msg: Msg; isMe: boolean; groupedTop: boolean; groupedBottom: boolean;
+  onRecall: () => void; onDeleteForMe: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const startPos = useRef<{ x: number; y: number } | null>(null);
+  const triggered = useRef(false);
+
+  const start = (x: number, y: number) => {
+    triggered.current = false;
+    startPos.current = { x, y };
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => {
+      triggered.current = true;
+      setOpen(true);
+    }, 500);
+  };
+  const move = (x: number, y: number) => {
+    if (!startPos.current) return;
+    const dx = Math.abs(x - startPos.current.x);
+    const dy = Math.abs(y - startPos.current.y);
+    if (dx > 8 || dy > 8) {
+      if (timerRef.current) clearTimeout(timerRef.current);
+      startPos.current = null;
+    }
+  };
+  const end = () => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+    startPos.current = null;
+  };
+
+  return (
+    <DropdownMenu open={open} onOpenChange={setOpen}>
+      <DropdownMenuTrigger asChild>
+        <button
+          type="button"
+          onContextMenu={(e) => { e.preventDefault(); setOpen(true); }}
+          onTouchStart={(e) => { const t = e.touches[0]; start(t.clientX, t.clientY); }}
+          onTouchMove={(e) => { const t = e.touches[0]; move(t.clientX, t.clientY); }}
+          onTouchEnd={end}
+          onTouchCancel={end}
+          onPointerDown={(e) => { if (e.pointerType === "mouse") start(e.clientX, e.clientY); }}
+          onPointerMove={(e) => { if (e.pointerType === "mouse") move(e.clientX, e.clientY); }}
+          onPointerUp={end}
+          onPointerLeave={end}
+          onClick={(e) => { if (triggered.current) { e.preventDefault(); e.stopPropagation(); } }}
+          className={cn(
+            "group relative max-w-full whitespace-pre-wrap break-words px-3.5 py-2 text-[15px] leading-snug shadow-[var(--shadow-bubble)] transition select-none",
+            isMe
+              ? "bg-[var(--color-bubble-out)] text-[var(--color-bubble-out-foreground)]"
+              : "bg-[var(--color-bubble-in)] text-[var(--color-bubble-in-foreground)]",
+            bubbleRadius(isMe, groupedTop, groupedBottom),
+            msg.recalled && "italic opacity-60"
+          )}
+        >
+          {msg.recalled ? "Tin nhắn đã được thu hồi" : msg.content}
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align={isMe ? "end" : "start"}>
+        {isMe && !msg.recalled && (
+          <DropdownMenuItem onClick={onRecall}>
+            <Undo2 className="mr-2 size-4" /> Thu hồi với mọi người
+          </DropdownMenuItem>
+        )}
+        <DropdownMenuItem onClick={onDeleteForMe}>
+          <Trash2 className="mr-2 size-4" /> Xoá ở phía bạn
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
 

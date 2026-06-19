@@ -10,8 +10,6 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import kinbookLogo from "@/assets/kinbook-logo.png";
 
-// Đặt link APK Kinbook tại đây sau khi build (ví dụ /downloads/kinbook.apk hoặc URL ngoài)
-const APK_URL = "/kinbook.apk";
 
 function isAndroid() {
   if (typeof navigator === "undefined") return false;
@@ -20,7 +18,7 @@ function isAndroid() {
 
 type Profile = { id: string; display_name: string; avatar_url: string | null };
 
-export function AppShell({ children }: { children: ReactNode }) {
+export function AppShell({ children, hideMobileNav = false }: { children: ReactNode; hideMobileNav?: boolean }) {
   const { user, signOut } = useAuth();
   const [profile, setProfile] = useState<Profile | null>(null);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
@@ -85,37 +83,40 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
       </aside>
 
-      {/* Mobile top bar with APK download (Android only) */}
-      <KinbookMobileHeader />
+      {/* Mobile top bar (hidden when chatting) */}
+      {!hideMobileNav && <KinbookMobileHeader />}
 
 
-      <main className="flex-1 min-w-0 flex flex-col pt-[calc(env(safe-area-inset-top)+3rem)] md:pt-0">{children}</main>
+      <main className={cn("flex-1 min-w-0 flex flex-col", hideMobileNav ? "pt-0" : "pt-[calc(env(safe-area-inset-top)+3rem)] md:pt-0")}>{children}</main>
 
       {/* Mobile bottom nav */}
-      <nav className="md:hidden fixed bottom-0 inset-x-0 z-30 flex items-center justify-around border-t bg-card/95 backdrop-blur pb-[env(safe-area-inset-bottom)]">
-        {items.map((it) => {
-          const active = pathname.startsWith(it.to);
-          return (
-            <Link
-              key={it.to}
-              to={it.to}
-              className={cn(
-                "flex flex-1 flex-col items-center gap-0.5 py-2.5 text-[11px] font-medium",
-                active ? "text-primary" : "text-muted-foreground"
-              )}
-            >
-              <it.icon className="size-5" />
-              {it.label}
-            </Link>
-          );
-        })}
-      </nav>
+      {!hideMobileNav && (
+        <nav className="md:hidden fixed bottom-0 inset-x-0 z-30 flex items-center justify-around border-t bg-card/95 backdrop-blur pb-[env(safe-area-inset-bottom)]">
+          {items.map((it) => {
+            const active = pathname.startsWith(it.to);
+            return (
+              <Link
+                key={it.to}
+                to={it.to}
+                className={cn(
+                  "flex flex-1 flex-col items-center gap-0.5 py-2.5 text-[11px] font-medium",
+                  active ? "text-primary" : "text-muted-foreground"
+                )}
+              >
+                <it.icon className="size-5" />
+                {it.label}
+              </Link>
+            );
+          })}
+        </nav>
+      )}
     </div>
   );
 }
 
 function KinbookMobileHeader() {
   const [show, setShow] = useState(false);
+  const [open, setOpen] = useState(false);
   useEffect(() => {
     setShow(isAndroid());
   }, []);
@@ -126,18 +127,44 @@ function KinbookMobileHeader() {
         <span className="text-sm font-bold tracking-tight">KinBook</span>
       </Link>
       {show && (
-        <a
-          href={APK_URL}
-          download
-          className={cn(
-            "inline-flex items-center gap-1.5 rounded-full bg-black px-3 py-1.5 text-xs font-black",
-            "text-[#39FF14] [text-shadow:_0_0_6px_#39FF14,_0_0_12px_#39FF14]",
-            "ring-1 ring-[#39FF14]/50",
+        <>
+          <button
+            type="button"
+            onClick={() => setOpen(true)}
+            className={cn(
+              "inline-flex items-center gap-1.5 rounded-full bg-black px-3 py-1.5 text-xs font-black",
+              "text-[#39FF14] [text-shadow:_0_0_6px_#39FF14,_0_0_12px_#39FF14]",
+              "ring-1 ring-[#39FF14]/50",
+            )}
+          >
+            <Download className="size-3.5" />
+            Tải App KinBook
+          </button>
+          {open && (
+            <div
+              className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-5"
+              onClick={() => setOpen(false)}
+            >
+              <div
+                className="w-full max-w-sm rounded-2xl bg-card p-5 shadow-xl"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <h3 className="text-base font-bold">Tải App KinBook (APK)</h3>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  File APK sẽ sớm có mặt. Khi cài, nếu máy chặn, vào{" "}
+                  <span className="font-medium text-foreground">Cài đặt → Bảo mật → Cho phép cài đặt từ nguồn không xác định</span>{" "}
+                  rồi mở lại link tải.
+                </p>
+                <p className="mt-2 text-xs text-muted-foreground">
+                  Trong lúc chờ, bạn có thể dùng trực tiếp KinBook trên trình duyệt hoặc thêm vào màn hình chính (Add to Home Screen) để mở như app.
+                </p>
+                <div className="mt-4 flex justify-end">
+                  <Button size="sm" onClick={() => setOpen(false)}>Đã hiểu</Button>
+                </div>
+              </div>
+            </div>
           )}
-        >
-          <Download className="size-3.5" />
-          Tải App KinBook
-        </a>
+        </>
       )}
     </header>
   );
