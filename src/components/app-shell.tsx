@@ -118,6 +118,7 @@ export function AppShell({ children, hideMobileNav = false }: { children: ReactN
 
 function KinbookMobileHeader() {
   const [show, setShow] = useState(false);
+  const [open, setOpen] = useState(false);
   useEffect(() => {
     setShow(isAndroid());
   }, []);
@@ -128,18 +129,44 @@ function KinbookMobileHeader() {
         <span className="text-sm font-bold tracking-tight">KinBook</span>
       </Link>
       {show && (
-        <a
-          href={APK_URL}
-          download
-          className={cn(
-            "inline-flex items-center gap-1.5 rounded-full bg-black px-3 py-1.5 text-xs font-black",
-            "text-[#39FF14] [text-shadow:_0_0_6px_#39FF14,_0_0_12px_#39FF14]",
-            "ring-1 ring-[#39FF14]/50",
+        <>
+          <button
+            type="button"
+            onClick={() => setOpen(true)}
+            className={cn(
+              "inline-flex items-center gap-1.5 rounded-full bg-black px-3 py-1.5 text-xs font-black",
+              "text-[#39FF14] [text-shadow:_0_0_6px_#39FF14,_0_0_12px_#39FF14]",
+              "ring-1 ring-[#39FF14]/50",
+            )}
+          >
+            <Download className="size-3.5" />
+            Tải App KinBook
+          </button>
+          {open && (
+            <div
+              className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-5"
+              onClick={() => setOpen(false)}
+            >
+              <div
+                className="w-full max-w-sm rounded-2xl bg-card p-5 shadow-xl"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <h3 className="text-base font-bold">Tải App KinBook (APK)</h3>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  File APK sẽ sớm có mặt. Khi cài, nếu máy chặn, vào{" "}
+                  <span className="font-medium text-foreground">Cài đặt → Bảo mật → Cho phép cài đặt từ nguồn không xác định</span>{" "}
+                  rồi mở lại link tải.
+                </p>
+                <p className="mt-2 text-xs text-muted-foreground">
+                  Trong lúc chờ, bạn có thể dùng trực tiếp KinBook trên trình duyệt hoặc thêm vào màn hình chính (Add to Home Screen) để mở như app.
+                </p>
+                <div className="mt-4 flex justify-end">
+                  <Button size="sm" onClick={() => setOpen(false)}>Đã hiểu</Button>
+                </div>
+              </div>
+            </div>
           )}
-        >
-          <Download className="size-3.5" />
-          Tải App KinBook
-        </a>
+        </>
       )}
     </header>
   );
