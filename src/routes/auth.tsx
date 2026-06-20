@@ -79,8 +79,21 @@ function AuthPage() {
         toast.error("Không tìm thấy tài khoản phù hợp");
         return;
       }
-      const { error } = await supabase.auth.signInWithPassword({ email: resolved, password });
+      const { data: signInData, error } = await supabase.auth.signInWithPassword({ email: resolved, password });
       if (error) throw error;
+      // Check if account is blocked
+      if (signInData.user) {
+        const { data: prof } = await supabase
+          .from("profiles")
+          .select("is_blocked")
+          .eq("id", signInData.user.id)
+          .maybeSingle();
+        if (prof?.is_blocked) {
+          await supabase.auth.signOut();
+          toast.error("Tài khoản đã bị khóa");
+          return;
+        }
+      }
       toast.success("Đăng nhập thành công");
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Có lỗi xảy ra";

@@ -148,25 +148,33 @@ export const replyAsBot = createServerFn({ method: "POST" })
     const longTermFacts = (facts ?? []).map((f: any) => f.fact as string);
     const summary = (mem?.summary ?? "") as string;
 
-    // Get sliding window
+    // Get sliding window with timestamps for idempotency
     const { data: msgs } = await supabaseAdmin
       .from("messages")
-      .select("sender_id, content, kind")
+      .select("id, sender_id, content, kind, created_at")
       .eq("conversation_id", data.conversationId)
       .order("created_at", { ascending: false })
       .limit(HISTORY_WINDOW);
-    const history = (msgs ?? [])
-      .reverse()
+    const ordered = (msgs ?? []).slice().reverse();
+    const history = ordered
       .filter((m: any) => m.kind === "text" && m.content)
       .map((m: any) => ({
         role: m.sender_id === BOT_ID ? "assistant" : "user",
         content: m.content as string,
+        created_at: m.created_at as string,
       }));
 
     const apiKey = process.env.LOVABLE_API_KEY;
     if (!apiKey) throw new Error("LOVABLE_API_KEY missing");
 
-    const lastUserMsg = [...history].reverse().find((m) => m.role === "user")?.content ?? "";
+    const lastUser = [...history].reverse().find((m) => m.role === "user");
+    const lastAssistant = [...history].reverse().find((m) => m.role === "assistant");
+    const lastUserMsg = lastUser?.content ?? "";
+
+    // Idempotency: if a bot reply already exists AFTER the latest user msg, do nothing.
+    if (lastUser && lastAssistant && new Date(lastAssistant.created_at) > new Date(lastUser.created_at)) {
+      return { ok: true, reply: lastAssistant.content, skipped: true };
+    }
 
     // 1) Easter egg: người dùng có tên "beo" → trả lời cố định
     let finalReply: string | null = null;
@@ -185,11 +193,18 @@ export const replyAsBot = createServerFn({ method: "POST" })
     // 4) Gọi LLM nếu chưa có câu trả lời
     if (!finalReply) {
       const system = buildSystemPrompt(userName, longTermFacts, summary);
-      const reply = await callGateway(
-        [{ role: "system", content: system }, ...history],
-        apiKey,
-      );
-      finalReply = reply || "Mình chưa hiểu, bạn nói rõ hơn nhé.";
+      const llmMessages = [
+        { role: "system", content: system },
+        ...history.map(({ role, content }) => ({ role, content })),
+      ];
+      const reply = await callGateway(llmMessages, apiKey);
+      let candidate = reply || "Mình chưa hiểu, bạn nói rõ hơn nhé.";
+
+      // Duplicate-output guard: nếu trả lời mới trùng với câu cuối của bot → reset context.
+      if (lastAssistant && candidate.trim() === lastAssistant.content.trim()) {
+        candidate = "Context reset. Đang đọc lại yêu cầu mới — bạn nhắn lại giúp mình nhé.";
+      }
+      finalReply = candidate;
     }
 
     await supabaseAdmin.from("messages").insert({
@@ -200,7 +215,6 @@ export const replyAsBot = createServerFn({ method: "POST" })
     });
 
     // Fire-and-forget: extract memory facts from the latest user message
-    const lastUser = [...history].reverse().find((m) => m.role === "user");
     if (lastUser) {
       extractAndStoreFact(context.userId, lastUser.content, apiKey).catch(() => {});
     }
@@ -208,7 +222,12 @@ export const replyAsBot = createServerFn({ method: "POST" })
     // Periodically summarize if conversation grows long
     const totalCount = (msgs ?? []).length;
     if (totalCount >= HISTORY_WINDOW) {
-      summarizeIfNeeded(data.conversationId, history, summary, apiKey).catch(() => {});
+      summarizeIfNeeded(
+        data.conversationId,
+        history.map(({ role, content }) => ({ role, content })),
+        summary,
+        apiKey,
+      ).catch(() => {});
     }
 
     return { ok: true, reply: finalReply };
