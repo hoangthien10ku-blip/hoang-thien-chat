@@ -1,7 +1,7 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { MessageSquare, Users, Settings, LogOut, Shield, Download } from "lucide-react";
+import { MessageSquare, Users, Settings, LogOut, Shield, PlusSquare } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useState, useCallback, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { UserAvatar } from "@/components/user-avatar";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -10,11 +10,15 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import kinbookLogo from "@/assets/kinbook-logo.png";
 
-
-function isAndroid() {
-  if (typeof navigator === "undefined") return false;
-  return /android/i.test(navigator.userAgent);
+function isStandalone() {
+  return typeof window !== "undefined" && (window.matchMedia("(display-mode: standalone)").matches || (window.navigator as unknown as { standalone?: boolean }).standalone === true);
 }
+
+type BeforeInstallPromptEvent = Event & {
+  prompt: () => Promise<void>;
+  userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
+};
+
 
 type Profile = { id: string; display_name: string; avatar_url: string | null };
 
@@ -116,55 +120,86 @@ export function AppShell({ children, hideMobileNav = false }: { children: ReactN
 
 function KinbookMobileHeader() {
   const [show, setShow] = useState(false);
+  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [open, setOpen] = useState(false);
+
   useEffect(() => {
-    setShow(isAndroid());
+    if (isStandalone()) {
+      setShow(false);
+      return;
+    }
+    const mq = window.matchMedia("(max-width: 768px)");
+    const update = () => setShow(mq.matches);
+    update();
+    const listener = (e: MediaQueryListEvent) => update();
+    mq.addEventListener("change", listener);
+
+    const handler = (e: Event) => {
+      e.preventDefault();
+      setDeferredPrompt(e as BeforeInstallPromptEvent);
+    };
+    window.addEventListener("beforeinstallprompt", handler);
+    return () => {
+      mq.removeEventListener("change", listener);
+      window.removeEventListener("beforeinstallprompt", handler);
+    };
   }, []);
+
+  const install = useCallback(async () => {
+    if (!deferredPrompt) {
+      setOpen(true);
+      return;
+    }
+    await deferredPrompt.prompt();
+    await deferredPrompt.userChoice;
+    setDeferredPrompt(null);
+    setOpen(false);
+  }, [deferredPrompt]);
+
+  if (!show) return null;
+
   return (
     <header className="md:hidden fixed top-0 inset-x-0 z-30 flex items-center justify-between border-b bg-card/95 backdrop-blur px-3 py-2 pt-[calc(env(safe-area-inset-top)+0.5rem)]">
       <Link to="/chat" className="flex items-center gap-2" aria-label="KinBook">
         <img src={kinbookLogo} alt="" width={28} height={28} className="size-7 rounded-lg" />
         <span className="text-sm font-bold tracking-tight">KinBook</span>
       </Link>
-      {show && (
-        <>
-          <button
-            type="button"
-            onClick={() => setOpen(true)}
-            className={cn(
-              "inline-flex items-center gap-1.5 rounded-full bg-black px-3 py-1.5 text-xs font-black",
-              "text-[#39FF14] [text-shadow:_0_0_6px_#39FF14,_0_0_12px_#39FF14]",
-              "ring-1 ring-[#39FF14]/50",
-            )}
+      <button
+        type="button"
+        onClick={install}
+        className={cn(
+          "inline-flex items-center gap-1.5 rounded-full bg-black px-3 py-1.5 text-xs font-black",
+          "text-[#39FF14] [text-shadow:_0_0_6px_#39FF14,_0_0_12px_#39FF14]",
+          "ring-1 ring-[#39FF14]/50",
+        )}
+      >
+        <PlusSquare className="size-3.5" />
+        Cài app
+      </button>
+      {open && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-5"
+          onClick={() => setOpen(false)}
+        >
+          <div
+            className="w-full max-w-sm rounded-2xl bg-card p-5 shadow-xl"
+            onClick={(e) => e.stopPropagation()}
           >
-            <Download className="size-3.5" />
-            Tải App KinBook
-          </button>
-          {open && (
-            <div
-              className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-5"
-              onClick={() => setOpen(false)}
-            >
-              <div
-                className="w-full max-w-sm rounded-2xl bg-card p-5 shadow-xl"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <h3 className="text-base font-bold">Tải App KinBook (APK)</h3>
-                <p className="mt-2 text-sm text-muted-foreground">
-                  File APK sẽ sớm có mặt. Khi cài, nếu máy chặn, vào{" "}
-                  <span className="font-medium text-foreground">Cài đặt → Bảo mật → Cho phép cài đặt từ nguồn không xác định</span>{" "}
-                  rồi mở lại link tải.
-                </p>
-                <p className="mt-2 text-xs text-muted-foreground">
-                  Trong lúc chờ, bạn có thể dùng trực tiếp KinBook trên trình duyệt hoặc thêm vào màn hình chính (Add to Home Screen) để mở như app.
-                </p>
-                <div className="mt-4 flex justify-end">
-                  <Button size="sm" onClick={() => setOpen(false)}>Đã hiểu</Button>
-                </div>
-              </div>
+            <h3 className="text-base font-bold">Thêm KinBook vào màn hình chính</h3>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Trên Android/Chrome: nhấn <span className="font-medium text-foreground">⋮ → Cài đặt ứng dụng / Thêm vào màn hình chính</span>.
+            </p>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Trên iPhone/Safari: nhấn <span className="font-medium text-foreground">Chia sẻ → Thêm vào màn hình chính</span>.
+            </p>
+            <p className="mt-2 text-xs text-muted-foreground">
+              Sau khi thêm, mở KinBook như một app thực thụ, có icon riêng và trải nghiệm toàn màn hình.
+            </p>
+            <div className="mt-4 flex justify-end">
+              <Button size="sm" onClick={() => setOpen(false)}>Đã hiểu</Button>
             </div>
-          )}
-        </>
+          </div>
+        </div>
       )}
     </header>
   );
