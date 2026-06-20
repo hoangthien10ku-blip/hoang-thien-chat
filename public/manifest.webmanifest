@@ -1,0 +1,16 @@
+{
+  "id": "kinbook",
+  "name": "KinBook",
+  "short_name": "KinBook",
+  "description": "KinBook: nhắn tin thời gian thực, có AL God AI hỗ trợ 24/7.",
+  "start_url": "/chat",
+  "display": "standalone",
+  "background_color": "#0A0F1C",
+  "theme_color": "#0A0F1C",
+  "orientation": "portrait",
+  "lang": "vi",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
