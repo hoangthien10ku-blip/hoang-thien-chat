@@ -1,7 +1,7 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { MessageSquare, Users, Settings, LogOut, Shield, Download } from "lucide-react";
+import { MessageSquare, Users, Settings, LogOut, Shield, PlusSquare } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useState, useCallback, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { UserAvatar } from "@/components/user-avatar";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -10,11 +10,15 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import kinbookLogo from "@/assets/kinbook-logo.png";
 
-
-function isAndroid() {
-  if (typeof navigator === "undefined") return false;
-  return /android/i.test(navigator.userAgent);
+function isStandalone() {
+  return typeof window !== "undefined" && (window.matchMedia("(display-mode: standalone)").matches || (window.navigator as unknown as { standalone?: boolean }).standalone === true);
 }
+
+type BeforeInstallPromptEvent = Event & {
+  prompt: () => Promise<void>;
+  userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
+};
+
 
 type Profile = { id: string; display_name: string; avatar_url: string | null };
 
