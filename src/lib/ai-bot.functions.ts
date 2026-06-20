@@ -198,12 +198,13 @@ export const replyAsBot = createServerFn({ method: "POST" })
         ...history.map(({ role, content }) => ({ role, content })),
       ];
       const reply = await callGateway(llmMessages, apiKey);
-      finalReply = reply || "Mình chưa hiểu, bạn nói rõ hơn nhé.";
+      let candidate = reply || "Mình chưa hiểu, bạn nói rõ hơn nhé.";
 
       // Duplicate-output guard: nếu trả lời mới trùng với câu cuối của bot → reset context.
-      if (lastAssistant && finalReply.trim() === lastAssistant.content.trim()) {
-        finalReply = "Context reset. Đang đọc lại yêu cầu mới — bạn nhắn lại giúp mình nhé.";
+      if (lastAssistant && candidate.trim() === lastAssistant.content.trim()) {
+        candidate = "Context reset. Đang đọc lại yêu cầu mới — bạn nhắn lại giúp mình nhé.";
       }
+      finalReply = candidate;
     }
 
     await supabaseAdmin.from("messages").insert({
