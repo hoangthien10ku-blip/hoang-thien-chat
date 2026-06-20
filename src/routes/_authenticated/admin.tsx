@@ -37,6 +37,7 @@ function AdminPage() {
   const [tab, setTab] = useState<"users" | "reports">("users");
   const [users, setUsers] = useState<ProfileRow[]>([]);
   const [adminIds, setAdminIds] = useState<Set<string>>(new Set());
+  const [ownerIds, setOwnerIds] = useState<Set<string>>(new Set());
   const [reports, setReports] = useState<ReportRow[]>([]);
   const [q, setQ] = useState("");
 
@@ -49,9 +50,10 @@ function AdminPage() {
     setUsers((data as ProfileRow[]) || []);
     const { data: roles } = await supabase
       .from("user_roles")
-      .select("user_id")
-      .eq("role", "admin");
-    setAdminIds(new Set((roles || []).map((r: any) => r.user_id)));
+      .select("user_id, role")
+      .in("role", ["admin", "owner"]);
+    setAdminIds(new Set((roles || []).filter((r: any) => r.role === "admin").map((r: any) => r.user_id)));
+    setOwnerIds(new Set((roles || []).filter((r: any) => r.role === "owner").map((r: any) => r.user_id)));
   }
 
   async function loadReports() {
@@ -104,6 +106,9 @@ function AdminPage() {
   }
 
   async function toggleAdmin(u: ProfileRow) {
+    if (ownerIds.has(u.id)) {
+      return toast.error("Không thể thay đổi quyền của AL God AI (chủ sở hữu)");
+    }
     const isA = adminIds.has(u.id);
     if (isA) {
       const { error } = await supabase
@@ -112,13 +117,13 @@ function AdminPage() {
         .eq("user_id", u.id)
         .eq("role", "admin");
       if (error) return toast.error(error.message);
-      toast.success("Đã thu hồi quyền quản trị");
+      toast.success("Đã thu hồi quyền Admin Vibai");
     } else {
       const { error } = await supabase
         .from("user_roles")
         .insert({ user_id: u.id, role: "admin" });
       if (error) return toast.error(error.message);
-      toast.success("Đã cấp quyền quản trị");
+      toast.success("Đã cấp quyền Admin Vibai");
     }
     loadUsers();
   }
@@ -185,6 +190,7 @@ function AdminPage() {
               <div className="divide-y rounded-2xl border bg-card">
                 {filtered.map((u) => {
                   const isA = adminIds.has(u.id);
+                  const isOwner = ownerIds.has(u.id);
                   return (
                     <div
                       key={u.id}
@@ -192,11 +198,16 @@ function AdminPage() {
                     >
                       <UserAvatar name={u.display_name} src={u.avatar_url} size="sm" />
                       <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 flex-wrap">
                           <p className="truncate font-medium">{u.display_name}</p>
-                          {isA && (
+                          {isOwner && (
+                            <span className="rounded-full bg-amber-500/20 px-2 py-0.5 text-[10px] font-semibold text-amber-600 dark:text-amber-400">
+                              AL GOD AI
+                            </span>
+                          )}
+                          {isA && !isOwner && (
                             <span className="rounded-full bg-primary/15 px-2 py-0.5 text-[10px] font-semibold text-primary">
-                              ADMIN
+                              ADMIN VIBAI
                             </span>
                           )}
                           {u.is_blocked && (
@@ -214,6 +225,8 @@ function AdminPage() {
                           size="sm"
                           variant="outline"
                           onClick={() => toggleAdmin(u)}
+                          disabled={isOwner}
+                          title={isOwner ? "AL God AI không thể bị thay đổi" : undefined}
                         >
                           {isA ? (
                             <>
@@ -221,7 +234,7 @@ function AdminPage() {
                             </>
                           ) : (
                             <>
-                              <Shield className="size-4" /> Cấp admin
+                              <Shield className="size-4" /> Cấp Admin Vibai
                             </>
                           )}
                         </Button>
@@ -229,6 +242,7 @@ function AdminPage() {
                           size="sm"
                           variant={u.is_blocked ? "outline" : "destructive"}
                           onClick={() => toggleBlock(u)}
+                          disabled={isOwner}
                         >
                           {u.is_blocked ? (
                             <>

@@ -478,7 +478,7 @@ function BubbleMenu({
     timerRef.current = setTimeout(() => {
       triggered.current = true;
       setOpen(true);
-    }, 500);
+    }, 2000);
   };
   const move = (x: number, y: number) => {
     if (!startPos.current) return;
@@ -522,14 +522,14 @@ function BubbleMenu({
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align={isMe ? "end" : "start"}>
+        <DropdownMenuItem onClick={onDeleteForMe}>
+          <Trash2 className="mr-2 size-4" /> Thu hồi phía mình
+        </DropdownMenuItem>
         {isMe && !msg.recalled && (
           <DropdownMenuItem onClick={onRecall}>
-            <Undo2 className="mr-2 size-4" /> Thu hồi với mọi người
+            <Undo2 className="mr-2 size-4" /> Thu hồi tất cả
           </DropdownMenuItem>
         )}
-        <DropdownMenuItem onClick={onDeleteForMe}>
-          <Trash2 className="mr-2 size-4" /> Xoá ở phía bạn
-        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );
